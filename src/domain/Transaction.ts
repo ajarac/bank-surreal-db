@@ -1,5 +1,4 @@
 import { TransactionType } from './transaction-type';
-import { Money } from 'ts-money';
 
 export interface TransactionArgs {
 	id: string;
@@ -16,7 +15,8 @@ export type CreateTransactionArgs = Omit<TransactionArgs, 'createdAt'>;
 export class Transaction {
 	public readonly id: string;
 	public readonly accountId: string;
-	public readonly money: Money;
+	public readonly amount: number;
+	public readonly currency: string;
 	public readonly type: TransactionType;
 	public readonly description: string;
 	public readonly createdAt: Date;
@@ -24,7 +24,8 @@ export class Transaction {
 	constructor(args: TransactionArgs) {
 		this.id = args.id;
 		this.accountId = args.accountId;
-		this.money = Money.fromDecimal(args.amount, args.currency);
+		this.amount = args.amount;
+		this.currency = args.currency;
 		this.type = args.type;
 		this.description = args.description;
 		this.createdAt = args.createdAt;

@@ -1,7 +1,6 @@
 import { TransactionType } from './transaction-type';
 import { Transaction } from './Transaction';
 import { AccountInsufficientFundsException } from './exceptions/account-insufficient-funds.exception';
-import { Money } from 'ts-money';
 
 export interface AccountArgs {
 	id: string;
@@ -19,7 +18,8 @@ export class Account {
 	public readonly id: string;
 	public readonly userId: string;
 	public readonly name: string;
-	public money: Money;
+	public balance: number;
+	public readonly currency: string;
 	public readonly createdAt: Date;
 	public updatedAt: Date;
 
@@ -27,7 +27,8 @@ export class Account {
 		this.id = args.id;
 		this.userId = args.userId;
 		this.name = args.name;
-		this.money = Money.fromDecimal(args.balance, args.currency);
+		this.balance = args.balance;
+		this.currency = args.currency;
 		this.createdAt = args.createdAt;
 		this.updatedAt = args.updatedAt;
 	}
@@ -47,19 +48,23 @@ export class Account {
 	public addTransaction(transaction: Transaction): void {
 		switch (transaction.type) {
 			case TransactionType.DEPOSIT:
-				this.money.add(transaction.money);
+				this.balance += transaction.amount;
 				break;
 			case TransactionType.WITHDRAWAL:
-				if (this.money.amount < transaction.money.amount) {
+				if (this.balance < transaction.amount) {
 					throw new AccountInsufficientFundsException(this.id);
 				}
-				this.money.subtract(transaction.money);
+				this.balance -= transaction.amount;
 				break;
 		}
 		this.updatedAt = new Date();
 	}
 
 	public getBalance(): number {
-		return this.money.amount;
+		return this.balance;
+	}
+
+	public getCurrency(): string {
+		return this.currency;
 	}
 }
