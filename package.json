@@ -23,9 +23,11 @@
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/swagger": "^7.1.11",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
-    "surrealdb.js": "^0.9.0"
+    "surrealdb.js": "^0.9.0",
+    "ts-money": "^0.4.8"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
