@@ -25,11 +25,6 @@ class AddTransactionRequestBody implements AddTransactionCommand {
 	@ApiProperty()
 	description: string;
 
-	@IsString()
-	@IsNotEmpty()
-	@ApiProperty()
-	id: string;
-
 	@IsEnum(TransactionType)
 	@IsNotEmpty()
 	@ApiProperty({ enum: TransactionType })

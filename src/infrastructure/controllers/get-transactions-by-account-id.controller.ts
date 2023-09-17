@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { GetTransactionsByAccountIdUseCase } from '@application/use-cases/get-transactions-by-account-id.use-case';
-import { IsNumber, IsPositive, IsString, Max } from 'class-validator';
+import { IsNumber, IsNumberString, IsPositive, IsString, Max } from 'class-validator';
 import { Transaction } from '@domain/Transaction';
 import { PaginationResponse } from '@application/dto/pagination.response';
 import { ApiProperty } from '@nestjs/swagger';
@@ -8,11 +8,13 @@ import { ApiProperty } from '@nestjs/swagger';
 class PaginationQueryParams {
 	@IsNumber()
 	@IsPositive()
+	@ApiProperty()
 	page: number;
 
 	@IsNumber()
 	@Max(100)
 	@IsPositive()
+	@ApiProperty()
 	limit: number;
 }
 

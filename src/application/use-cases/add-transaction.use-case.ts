@@ -3,7 +3,7 @@ import { ACCOUNT_REPOSITORY_TOKEN, AccountRepository } from '@application/provid
 import { CreateTransactionArgs, Transaction } from '@domain/Transaction';
 import { AccountNotFoundException } from '@domain/exceptions/account-not-found.exception';
 
-export type AddTransactionCommand = CreateTransactionArgs;
+export type AddTransactionCommand = Omit<CreateTransactionArgs, 'id'>;
 
 @Injectable()
 export class AddTransactionUseCase {
@@ -15,10 +15,11 @@ export class AddTransactionUseCase {
 		if (account == null) {
 			throw new AccountNotFoundException(command.accountId);
 		}
-
-		const transaction = Transaction.create(command);
+		const id = this.repository.generateId();
+		const transaction = Transaction.create({ id, ...command });
 		account.addTransaction(transaction);
 
 		await this.repository.saveAccount(account);
+		await this.repository.addTransaction(transaction);
 	}
 }

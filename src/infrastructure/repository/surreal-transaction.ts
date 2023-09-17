@@ -1,9 +1,10 @@
 import { TransactionType } from '@domain/transaction-type';
 import { Transaction } from '@domain/Transaction';
 
+export const TRANSACTIONS_TABLE = 'transaction';
+
 export interface SurrealTransaction extends Record<string | number | symbol, unknown> {
 	id: string;
-	accountId: string;
 	amount: number;
 	currency: string;
 	type: TransactionType;
@@ -12,10 +13,14 @@ export interface SurrealTransaction extends Record<string | number | symbol, unk
 }
 
 export class SurrealTransactionMapper {
-	static toDomain(surrealDBTransaction: SurrealTransaction): Transaction {
+	public static idReference(id: string): string {
+		return `${TRANSACTIONS_TABLE}:${id}`;
+	}
+
+	static toDomain(surrealDBTransaction: SurrealTransaction, accountId: string): Transaction {
 		return new Transaction({
-			id: surrealDBTransaction.id,
-			accountId: surrealDBTransaction.accountId,
+			id: surrealDBTransaction.id.replace(`${TRANSACTIONS_TABLE}:`, ''),
+			accountId,
 			amount: surrealDBTransaction.amount,
 			type: surrealDBTransaction.type,
 			currency: surrealDBTransaction.currency,
@@ -26,8 +31,7 @@ export class SurrealTransactionMapper {
 
 	static fromDomain(transaction: Transaction): SurrealTransaction {
 		return {
-			id: transaction.id,
-			accountId: transaction.accountId,
+			id: this.idReference(transaction.id),
 			amount: transaction.amount,
 			currency: transaction.currency,
 			type: transaction.type,

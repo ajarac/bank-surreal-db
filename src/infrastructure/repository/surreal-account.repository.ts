@@ -4,47 +4,36 @@ import { Transaction } from '@domain/Transaction';
 import { Account } from '@domain/Account';
 import { Nullable } from '@shared/types/nullable';
 import { PaginationResponse } from '@application/dto/pagination.response';
-import * as crypto from 'crypto';
 import Surreal from 'surrealdb.js';
-import { SurrealTransaction, SurrealTransactionMapper } from '@infrastructure/repository/surreal-transaction';
-import { SurrealAccount, SurrealAccountMapper } from '@infrastructure/repository/surreal-account';
-
-const ACCOUNTS_TABLE = 'accounts';
-const TRANSACTIONS_TABLE = 'transactions';
+import { SurrealTransaction, SurrealTransactionMapper, TRANSACTIONS_TABLE } from '@infrastructure/repository/surreal-transaction';
+import { ACCOUNTS_TABLE, SurrealAccount, SurrealAccountMapper } from '@infrastructure/repository/surreal-account';
 
 @Injectable()
 export class SurrealAccountRepository implements AccountRepository {
 	constructor(private readonly surrealDB: Surreal) {}
 
-	private static accountIdReference(accountId: string): string {
-		return `${ACCOUNTS_TABLE}:${accountId}`;
-	}
-
-	private static transactionIdReference(transactionId: string): string {
-		return `${TRANSACTIONS_TABLE}:${transactionId}`;
-	}
-
 	generateId(): string {
-		return crypto.randomUUID();
+		return '';
 	}
 
 	async addTransaction(transaction: Transaction): Promise<void> {
-		const surrealTransaction = SurrealTransactionMapper.fromDomain(transaction);
-		await this.surrealDB.create<SurrealTransaction>(SurrealAccountRepository.transactionIdReference(transaction.id), surrealTransaction);
+		const { id, ...surrealTransaction } = SurrealTransactionMapper.fromDomain(transaction);
+		const [transactionCreated] = await this.surrealDB.create<Omit<SurrealTransaction, 'id'>>(TRANSACTIONS_TABLE, surrealTransaction);
+		const accountReference = SurrealAccountMapper.idReference(transaction.accountId);
+		await this.surrealDB.query(`RELATE ${accountReference}->transacted->${transactionCreated.id} SET when = time::now();`);
 	}
 
 	async createAccount(account: Account): Promise<void> {
-		const surrealAccount = SurrealAccountMapper.fromDomain(account);
-		const result = await this.surrealDB.create<SurrealAccount>(ACCOUNTS_TABLE, surrealAccount);
-		console.log('result', result);
+		const { id, ...surrealAccount } = SurrealAccountMapper.fromDomain(account);
+		await this.surrealDB.create<Omit<SurrealAccount, 'id'>>(ACCOUNTS_TABLE, surrealAccount);
 	}
 
 	async deleteAccountById(AccountId: string): Promise<void> {
-		await this.surrealDB.delete(SurrealAccountRepository.accountIdReference(AccountId));
+		await this.surrealDB.delete(SurrealAccountMapper.idReference(AccountId));
 	}
 
 	async getAccountById(accountId: string): Promise<Nullable<Account>> {
-		const surrealAccounts = await this.surrealDB.select<SurrealAccount>(SurrealAccountRepository.accountIdReference(accountId));
+		const surrealAccounts = await this.surrealDB.select<SurrealAccount>(SurrealAccountMapper.idReference(accountId));
 		if (surrealAccounts.length == 0) {
 			return null;
 		}
@@ -60,13 +49,9 @@ export class SurrealAccountRepository implements AccountRepository {
 	}
 
 	async getTransactionsByAccountId(accountId: string, page: number, limit: number): Promise<PaginationResponse<Transaction>> {
-		const query = `SELECT *
-                   FROM ${TRANSACTIONS_TABLE}
-                   WHERE accountId = $accountId LIMIT $limit
-                   OFFSET $offset`;
-		const totalQuery = `SELECT COUNT(*)
-                        FROM ${TRANSACTIONS_TABLE}
-                        WHERE accountId = $accountId`;
+		const whereStatement = 'where $accountId->transacted->transaction';
+		const query = `select * from transaction ${whereStatement} LIMIT $limit START $start`;
+		const totalQuery = `SELECT COUNT() FROM ${TRANSACTIONS_TABLE} ${whereStatement} group all`;
 		const [surrealTransactions, total] = await this.surrealDB.query<
 			[
 				SurrealTransaction[],
@@ -75,18 +60,18 @@ export class SurrealAccountRepository implements AccountRepository {
 				}[],
 			]
 		>(`${query};${totalQuery}`, {
-			accountId,
-			limit,
-			offset: page * limit,
+			accountId: SurrealAccountMapper.idReference(accountId),
+			limit: limit,
+			start: (page - 1) * limit,
 		});
 		return {
 			total: total.result[0].count,
-			result: surrealTransactions.result.map((surrealTransaction) => SurrealTransactionMapper.toDomain(surrealTransaction)),
+			result: surrealTransactions.result.map((surrealTransaction) => SurrealTransactionMapper.toDomain(surrealTransaction, accountId)),
 		};
 	}
 
 	async saveAccount(account: Account): Promise<void> {
 		const surrealAccount = SurrealAccountMapper.fromDomain(account);
-		await this.surrealDB.update<SurrealAccount>(SurrealAccountRepository.accountIdReference(account.id), surrealAccount);
+		await this.surrealDB.merge<SurrealAccount>(SurrealAccountMapper.idReference(account.id), surrealAccount);
 	}
 }

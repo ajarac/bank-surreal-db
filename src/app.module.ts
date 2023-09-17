@@ -9,6 +9,7 @@ import { GetAccountByIdController } from '@infrastructure/controllers/get-accoun
 import { DeleteAccountController } from '@infrastructure/controllers/delete-account.controller';
 import { AddTransactionController } from '@infrastructure/controllers/add-transaction.controller';
 import { GetAccountsByUserIdController } from '@infrastructure/controllers/get-accounts-by-user-id.controller';
+import { TransactionsController } from '@infrastructure/controllers/get-transactions-by-account-id.controller';
 
 @Module({
 	imports: [],
@@ -19,6 +20,7 @@ import { GetAccountsByUserIdController } from '@infrastructure/controllers/get-a
 		GetAccountsByUserIdController,
 		DeleteAccountController,
 		AddTransactionController,
+		TransactionsController,
 	],
 	providers: [
 		...USE_CASES,
@@ -27,7 +29,7 @@ import { GetAccountsByUserIdController } from '@infrastructure/controllers/get-a
 			useFactory: async () => {
 				// Connect to the database
 				const db = new Surreal();
-				await db.connect('http://localhost:8000/rpc');
+				await db.connect('http://0.0.0.0:8000/rpc');
 
 				// Signin as a namespace, database, or root user
 				await db.signin({
