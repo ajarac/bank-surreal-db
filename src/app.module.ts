@@ -10,6 +10,7 @@ import { DeleteAccountController } from '@infrastructure/controllers/delete-acco
 import { AddTransactionController } from '@infrastructure/controllers/add-transaction.controller';
 import { GetAccountsByUserIdController } from '@infrastructure/controllers/get-accounts-by-user-id.controller';
 import { TransactionsController } from '@infrastructure/controllers/get-transactions-by-account-id.controller';
+import { EXCEPTIONS } from '@infrastructure/catch-exceptions/http-catch';
 
 @Module({
 	imports: [],
@@ -46,6 +47,7 @@ import { TransactionsController } from '@infrastructure/controllers/get-transact
 			provide: ACCOUNT_REPOSITORY_TOKEN,
 			useClass: SurrealAccountRepository,
 		},
+		...EXCEPTIONS,
 	],
 })
 export class AppModule {}
