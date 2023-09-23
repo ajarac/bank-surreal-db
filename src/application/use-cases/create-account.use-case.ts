@@ -8,11 +8,12 @@ export interface CreateAccountCommand {
 	readonly currency: string;
 }
 
+
 @Injectable()
 export class CreateAccountUseCase {
 	constructor(@Inject(ACCOUNT_REPOSITORY_TOKEN) private readonly repository: AccountRepository) {}
 
-	async create(command: CreateAccountCommand): Promise<void> {
+	async create(command: CreateAccountCommand): Promise<Account> {
 		const account = Account.create({
 			id: this.repository.generateId(),
 			userId: command.userId,
@@ -21,5 +22,7 @@ export class CreateAccountUseCase {
 		});
 
 		await this.repository.createAccount(account);
+
+		return account;
 	}
 }

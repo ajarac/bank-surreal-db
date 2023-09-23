@@ -47,10 +47,10 @@ export class Account {
 
 	public addTransaction(transaction: Transaction): void {
 		switch (transaction.type) {
-			case TransactionType.DEPOSIT:
+			case TransactionType.CREDIT:
 				this.balance += transaction.amount;
 				break;
-			case TransactionType.WITHDRAWAL:
+			case TransactionType.DEBIT:
 				if (this.balance < transaction.amount) {
 					throw new AccountInsufficientFundsException(this.id);
 				}

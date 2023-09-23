@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { CreateAccountCommand, CreateAccountUseCase } from '@application/use-cases/create-account.use-case';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ApiBody, ApiProperty } from '@nestjs/swagger';
+import { Account } from '@domain/Account';
 
 class CreateAccountRequestBody implements CreateAccountCommand {
 	@IsString()
@@ -26,7 +27,7 @@ export class CreateAccountController {
 
 	@Post()
 	@ApiBody({ type: CreateAccountRequestBody })
-	createAccount(@Body() body: CreateAccountRequestBody): Promise<void> {
+	createAccount(@Body() body: CreateAccountRequestBody): Promise<Account> {
 		return this.createAccountUseCase.create(body);
 	}
 }
